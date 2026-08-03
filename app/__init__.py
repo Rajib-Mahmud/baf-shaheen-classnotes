@@ -1,7 +1,7 @@
 import hmac
 import os
 
-from flask import Flask, redirect, render_template, request, url_for
+from flask import Flask, jsonify, redirect, render_template, request, url_for
 from flask_login import current_user
 
 from config import Config
@@ -47,6 +47,13 @@ def create_app(config_class=Config):
     login_manager.init_app(app)
     login_manager.login_view = "auth.login"
     login_manager.login_message = None
+
+    @login_manager.unauthorized_handler
+    def unauthorized():
+        # API callers get machine-readable 401s, never HTML redirects.
+        if request.path.startswith("/api/"):
+            return jsonify({"ok": False, "error": "Authentication required."}), 401
+        return redirect(url_for("auth.login", next=request.full_path))
 
     from .models import User
 
@@ -139,21 +146,30 @@ def create_app(config_class=Config):
             )
         return response
 
+    def _error_response(status, template, message):
+        if request.path.startswith("/api/"):
+            return jsonify({"ok": False, "error": message}), status
+        return render_template(template), status
+
     @app.errorhandler(403)
     def forbidden(e):
-        return render_template("errors/403.html"), 403
+        return _error_response(403, "errors/403.html", "You don't have access to that.")
 
     @app.errorhandler(404)
     def not_found(e):
-        return render_template("errors/404.html"), 404
+        return _error_response(404, "errors/404.html", "Not found.")
 
     @app.errorhandler(413)
     def too_large(e):
-        return render_template("errors/413.html"), 413
+        return _error_response(413, "errors/413.html", "Upload too large — max 10 photos, 8 MB each.")
+
+    @app.errorhandler(429)
+    def rate_limited(e):
+        return _error_response(429, "errors/429.html", "Too many requests — slow down and try again shortly.")
 
     @app.errorhandler(500)
     def internal_error(e):
         db.session.rollback()
-        return render_template("errors/500.html"), 500
+        return _error_response(500, "errors/500.html", "Something went wrong on our side.")
 
     return app

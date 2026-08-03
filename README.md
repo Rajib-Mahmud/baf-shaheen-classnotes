@@ -94,6 +94,14 @@ python run.py
   Decompression-bomb guard (max 64 MP) on image decoding.
 - In production set `PROXY_FIX=1` in `.env` (with the Nginx config below) so
   rate limiting sees real client IPs and HTTPS is detected correctly.
+- The API returns machine-readable JSON errors (401/403/404/413/429/500) —
+  never HTML redirects — and is CSRF-protected via the `X-CSRFToken` header.
+- Dependency audits: `pip-audit` clean. `npm audit` reports one advisory on
+  react-router (GHSA-qwww-vcr4-c8h2, RSC-mode server-action CSRF): **not
+  applicable** — this app uses client-side routing only, there is no RSC
+  server. No react-router version currently fixes it without reintroducing
+  an older client-side XSS advisory, so 7.18.2 (XSS-fixed) is pinned.
+  Re-check with `npm audit` after future react-router releases.
 
 ## Deploying on a VPS (Contabo, Ubuntu, Gunicorn + Nginx)
 

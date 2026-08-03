@@ -313,7 +313,10 @@ def import_students():
         return redirect(url_for("admin.sections"))
     if form.validate_on_submit():
         section = db.get_or_404(Section, form.section_id.data)
-        raw = form.csv_file.data.read()
+        raw = form.csv_file.data.read(2 * 1024 * 1024 + 1)
+        if len(raw) > 2 * 1024 * 1024:
+            flash("CSV too large (max 2 MB).", "error")
+            return render_template("admin/import_students.html", form=form)
         try:
             text = raw.decode("utf-8-sig")
         except UnicodeDecodeError:

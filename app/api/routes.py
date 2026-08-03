@@ -56,6 +56,13 @@ def err(message, status=400):
     return jsonify({"ok": False, "error": message}), status
 
 
+def to_int(value, default=0):
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return default
+
+
 def forbid():
     return err("You don't have access to that.", 403)
 
@@ -636,7 +643,7 @@ def create_chapter(subject_id):
         return err("Title is required.")
     ch = Chapter(
         title=title[:160],
-        order_index=int(body.get("order_index") or 0),
+        order_index=to_int(body.get("order_index")),
         subject_id=s.id,
     )
     db.session.add(ch)
@@ -661,7 +668,7 @@ def modify_chapter(chapter_id):
     if not title:
         return err("Title is required.")
     ch.title = title[:160]
-    ch.order_index = int(body.get("order_index") or 0)
+    ch.order_index = to_int(body.get("order_index"))
     db.session.commit()
     return jsonify({"ok": True})
 
@@ -1198,8 +1205,11 @@ def admin_import_students():
     file = request.files.get("csv_file")
     if file is None or not (file.filename or "").lower().endswith(".csv"):
         return err("A .csv file is required.")
+    raw = file.read(2 * 1024 * 1024 + 1)
+    if len(raw) > 2 * 1024 * 1024:
+        return err("CSV too large (max 2 MB).")
     try:
-        text = file.read().decode("utf-8-sig")
+        text = raw.decode("utf-8-sig")
     except UnicodeDecodeError:
         return err("CSV must be UTF-8 encoded.")
     created, errors = [], []
