@@ -6,7 +6,26 @@ upload photos of class notes organised by class → section → subject → chap
 so classmates can revise before exams and catch up on missed classes.
 
 Built with Flask, SQLAlchemy (SQLite), Flask-Login, Flask-WTF and Pillow.
-Server-rendered Jinja2 templates styled with Tailwind (CDN).
+
+Two frontends share the same backend and security rules:
+
+- **React SPA** (Vite + React Router + Tailwind) at **`/app`**, talking to the
+  JSON API under `/api/*`. Auth stays on the HttpOnly session cookie;
+  mutating calls send an `X-CSRFToken` header.
+- **Server-rendered Jinja2 pages** (Tailwind CDN) at the original URLs — kept
+  fully working as a fallback and for quick admin use.
+
+### Frontend development
+
+```bash
+cd frontend
+npm install
+npm run dev     # dev server on :5173, proxies /api + /image to Flask on :5000
+npm run build   # writes frontend/dist, which Flask serves at /app
+```
+
+The built `frontend/dist` is committed, so the VPS does not need Node —
+just `git pull` and restart. Rebuild locally after frontend changes.
 
 ## Roles
 

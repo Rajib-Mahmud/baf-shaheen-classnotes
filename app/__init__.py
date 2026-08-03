@@ -66,6 +66,7 @@ def create_app(config_class=Config):
         return user
 
     from .admin.routes import admin_bp
+    from .api.routes import api_bp
     from .auth.routes import auth_bp
     from .notes.routes import notes_bp
     from .student.routes import student_bp
@@ -76,6 +77,20 @@ def create_app(config_class=Config):
     app.register_blueprint(teacher_bp, url_prefix="/teacher")
     app.register_blueprint(student_bp)
     app.register_blueprint(notes_bp)
+    app.register_blueprint(api_bp, url_prefix="/api")
+
+    # React SPA (frontend/dist, built with `npm run build`), served at /app.
+    from flask import send_from_directory
+
+    spa_dist = os.path.join(os.path.dirname(app.root_path), "frontend", "dist")
+
+    @app.route("/app/", defaults={"path": ""})
+    @app.route("/app/<path:path>")
+    def spa(path):
+        full = os.path.normpath(os.path.join(spa_dist, path))
+        if path and full.startswith(os.path.normpath(spa_dist)) and os.path.isfile(full):
+            return send_from_directory(spa_dist, path)
+        return send_from_directory(spa_dist, "index.html")
 
     @app.before_request
     def enforce_password_change():
@@ -85,8 +100,13 @@ def create_app(config_class=Config):
             return None
         if not current_user.must_change_password:
             return None
+        endpoint = request.endpoint or ""
+        # API endpoints answer 428 JSON themselves; the SPA shell must load
+        # so it can show its own change-password screen.
+        if endpoint.startswith("api.") or endpoint == "spa":
+            return None
         allowed = {"auth.change_password", "auth.logout", "static"}
-        if request.endpoint not in allowed:
+        if endpoint not in allowed:
             return redirect(url_for("auth.change_password"))
         return None
 
