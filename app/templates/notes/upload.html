@@ -1,0 +1,111 @@
+{% extends "base.html" %}
+{% from "_macros.html" import field %}
+{% block title %}Upload note{% endblock %}
+{% block content %}
+<div class="max-w-lg mx-auto">
+  <div class="bg-white rounded-2xl shadow-sm ring-1 ring-slate-200 p-6">
+    <h1 class="text-lg font-bold mb-1">Upload note photos</h1>
+    <p class="text-sm text-slate-500 mb-5">Snap clear photos of the notes — one note can hold several pages.</p>
+    <form method="post" enctype="multipart/form-data" novalidate id="upload-form">
+      {{ form.hidden_tag() }}
+      {{ field(form.chapter_id) }}
+      {{ field(form.title, placeholder="e.g. Vectors — board work 12 Aug") }}
+      {{ field(form.description, placeholder="Anything your classmates should know (optional)") }}
+
+      <div class="mb-4">
+        {{ form.images.label(class_="block text-sm font-medium mb-1 text-slate-700") }}
+        <label for="{{ form.images.id }}"
+               class="block border-2 border-dashed border-slate-300 hover:border-sky-400 rounded-xl p-6 text-center cursor-pointer transition"
+               id="drop-zone">
+          <svg class="w-8 h-8 mx-auto text-slate-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 16.5V18a2.25 2.25 0 002.25 2.25h13.5A2.25 2.25 0 0021 18v-1.5M16.5 7.5L12 3m0 0L7.5 7.5M12 3v13.5"/>
+          </svg>
+          <span class="text-sm text-slate-600 font-medium">Tap to choose photos or use the camera</span>
+          <span class="block text-xs text-slate-400 mt-1">Up to 10 photos · max 8 MB each · JPG, PNG, WebP</span>
+        </label>
+        {{ form.images(class_="hidden", accept="image/jpeg,image/png,image/webp", id=form.images.id) }}
+        {% for err in form.images.errors %}<p class="text-red-600 text-xs mt-1">{{ err }}</p>{% endfor %}
+        <p id="file-error" class="hidden text-red-600 text-xs mt-2"></p>
+        <div id="preview-grid" class="grid grid-cols-3 sm:grid-cols-4 gap-2 mt-3"></div>
+      </div>
+
+      <button type="submit" id="submit-btn"
+              class="w-full bg-sky-800 hover:bg-sky-700 active:bg-sky-900 disabled:opacity-60 disabled:cursor-not-allowed text-white rounded-lg px-5 py-2.5 text-sm font-semibold transition">
+        Upload
+      </button>
+    </form>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+(function () {
+  var input = document.getElementById('{{ form.images.id }}');
+  var grid = document.getElementById('preview-grid');
+  var errBox = document.getElementById('file-error');
+  var form = document.getElementById('upload-form');
+  var btn = document.getElementById('submit-btn');
+  var MAX_FILES = 10, MAX_SIZE = 8 * 1024 * 1024;
+  var OK_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
+
+  function showError(msg) {
+    errBox.textContent = msg;
+    errBox.classList.toggle('hidden', !msg);
+  }
+
+  function removeFile(idx) {
+    var dt = new DataTransfer();
+    Array.from(input.files).forEach(function (f, i) { if (i !== idx) dt.items.add(f); });
+    input.files = dt.files;
+    render();
+  }
+
+  function render() {
+    grid.innerHTML = '';
+    showError('');
+    var files = Array.from(input.files);
+    if (files.length > MAX_FILES) showError('At most ' + MAX_FILES + ' photos per note — remove some.');
+    files.forEach(function (f, i) {
+      var bad = OK_TYPES.indexOf(f.type) === -1 ? 'wrong type'
+              : f.size > MAX_SIZE ? 'over 8 MB' : null;
+      var cell = document.createElement('div');
+      cell.className = 'relative rounded-lg overflow-hidden ring-1 ' + (bad ? 'ring-red-400' : 'ring-slate-200');
+      var img = document.createElement('img');
+      img.className = 'w-full h-20 object-cover bg-slate-100';
+      img.src = URL.createObjectURL(f);
+      img.onload = function () { URL.revokeObjectURL(img.src); };
+      cell.appendChild(img);
+      var x = document.createElement('button');
+      x.type = 'button';
+      x.innerHTML = '&times;';
+      x.className = 'absolute top-1 right-1 bg-black/60 hover:bg-black/80 text-white rounded-full w-5 h-5 text-xs leading-none';
+      x.onclick = function () { removeFile(i); };
+      cell.appendChild(x);
+      if (bad) {
+        var tag = document.createElement('span');
+        tag.textContent = bad;
+        tag.className = 'absolute bottom-0 inset-x-0 bg-red-600/90 text-white text-[10px] text-center py-0.5';
+        cell.appendChild(tag);
+        showError('Some photos are invalid (' + bad + ') — remove them before uploading.');
+      }
+      grid.appendChild(cell);
+    });
+  }
+
+  input.addEventListener('change', render);
+
+  form.addEventListener('submit', function (e) {
+    var files = Array.from(input.files);
+    if (files.length === 0) { e.preventDefault(); showError('Choose at least one photo.'); return; }
+    if (files.length > MAX_FILES ||
+        files.some(function (f) { return OK_TYPES.indexOf(f.type) === -1 || f.size > MAX_SIZE; })) {
+      e.preventDefault();
+      showError('Fix the highlighted photos first.');
+      return;
+    }
+    btn.disabled = true;
+    btn.textContent = 'Uploading…';
+  });
+})();
+</script>
+{% endblock %}

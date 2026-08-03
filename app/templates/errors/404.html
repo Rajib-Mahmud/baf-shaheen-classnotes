@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% block title %}404{% endblock %}
+{% block content %}
+<div class="text-center mt-16">
+  <h1 class="text-5xl font-bold text-slate-300">404</h1>
+  <p class="mt-2 text-slate-500">That page doesn't exist.</p>
+  <a href="{{ url_for('student.dashboard') }}" class="text-sky-700 text-sm mt-4 inline-block">← Back to home</a>
+</div>
+{% endblock %}

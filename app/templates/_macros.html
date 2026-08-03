@@ -1,0 +1,73 @@
+{% macro field(f) %}
+  <div class="mb-4">
+    {{ f.label(class_="block text-sm font-medium mb-1 text-slate-700") }}
+    {% if f.type == 'TextAreaField' %}
+      {{ f(class_="w-full rounded-lg border-slate-300 border px-3 py-2 text-sm focus:ring-2 focus:ring-sky-500 focus:border-sky-500 outline-none", rows=3) }}
+    {% elif f.type == 'SelectField' %}
+      {{ f(class_="w-full rounded-lg border-slate-300 border px-3 py-2 text-sm bg-white focus:ring-2 focus:ring-sky-500 focus:border-sky-500 outline-none") }}
+    {% elif f.type in ('FileField', 'MultipleFileField') %}
+      {{ f(class_="w-full text-sm file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-sky-100 file:text-sky-800 file:font-medium file:cursor-pointer hover:file:bg-sky-200", **kwargs) }}
+    {% else %}
+      {{ f(class_="w-full rounded-lg border-slate-300 border px-3 py-2 text-sm focus:ring-2 focus:ring-sky-500 focus:border-sky-500 outline-none", **kwargs) }}
+    {% endif %}
+    {% for err in f.errors %}
+      <p class="text-red-600 text-xs mt-1">{{ err }}</p>
+    {% endfor %}
+  </div>
+{% endmacro %}
+
+{% macro submit(f) %}
+  {{ f(class_="w-full sm:w-auto bg-sky-800 hover:bg-sky-700 active:bg-sky-900 text-white rounded-lg px-5 py-2.5 text-sm font-medium cursor-pointer transition") }}
+{% endmacro %}
+
+{% macro breadcrumb(items) %}
+  <nav class="text-sm text-slate-500 mb-3 flex flex-wrap items-center gap-1">
+    {% for label, href in items %}
+      {% if not loop.first %}<span class="text-slate-300">/</span>{% endif %}
+      {% if href %}
+        <a href="{{ href }}" class="hover:text-sky-700 hover:underline">{{ label }}</a>
+      {% else %}
+        <span class="text-slate-700 font-medium">{{ label }}</span>
+      {% endif %}
+    {% endfor %}
+  </nav>
+{% endmacro %}
+
+{% macro note_card(note) %}
+  <a href="{{ url_for('notes.view_note', note_id=note.id) }}"
+     class="group block bg-white rounded-xl shadow-sm hover:shadow-md ring-1 ring-slate-200 hover:ring-sky-300 transition overflow-hidden">
+    <div class="relative">
+      {% if note.images %}
+        <img src="{{ url_for('notes.serve_image', image_id=note.images[0].id, thumb=1) }}"
+             alt="{{ note.title }}" loading="lazy"
+             class="w-full h-36 object-cover bg-slate-200 group-hover:scale-[1.02] transition-transform">
+      {% else %}
+        <div class="w-full h-36 bg-slate-200 grid place-items-center text-slate-400 text-xs">No photo</div>
+      {% endif %}
+      <div class="absolute top-2 left-2 flex gap-1">
+        {% if note.is_official %}
+          <span class="text-[10px] uppercase font-bold bg-amber-400/95 text-amber-950 rounded-md px-1.5 py-0.5 shadow-sm">★ Official</span>
+        {% else %}
+          <span class="text-[10px] uppercase font-bold bg-white/90 text-slate-600 rounded-md px-1.5 py-0.5 shadow-sm">Student note</span>
+        {% endif %}
+        {% if note.is_hidden %}
+          <span class="text-[10px] uppercase font-bold bg-slate-800 text-white rounded-md px-1.5 py-0.5 shadow-sm">Hidden</span>
+        {% endif %}
+      </div>
+      <div class="absolute bottom-2 right-2 flex gap-1">
+        {% if note.votes %}
+          <span class="text-[10px] font-semibold bg-black/60 text-white rounded-md px-1.5 py-0.5">▲ {{ note.votes|length }}</span>
+        {% endif %}
+        {% if note.images|length > 1 %}
+          <span class="text-[10px] font-semibold bg-black/60 text-white rounded-md px-1.5 py-0.5">{{ note.images|length }} pages</span>
+        {% endif %}
+      </div>
+    </div>
+    <div class="p-3">
+      <h3 class="font-medium text-sm leading-snug line-clamp-2">{{ note.title }}</h3>
+      <p class="text-xs text-slate-500 mt-1 truncate">
+        {{ note.uploader.full_name }} · {{ note.created_at.strftime('%d %b %Y') }}
+      </p>
+    </div>
+  </a>
+{% endmacro %}

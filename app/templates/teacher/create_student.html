@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% from "_macros.html" import field, submit %}
+{% block title %}Add student{% endblock %}
+{% block content %}
+<div class="max-w-md mx-auto">
+  <div class="bg-white rounded-2xl shadow-sm ring-1 ring-slate-200 p-6">
+    <h1 class="text-lg font-bold mb-1">Add student</h1>
+    <p class="text-sm text-slate-500 mb-4">
+      The account will be created in <b>{{ current_user.section.label }}</b> (your section).
+    </p>
+    <form method="post" novalidate>
+      {{ form.hidden_tag() }}
+      {{ field(form.login_id, placeholder="e.g. 9A-042") }}
+      {{ field(form.full_name) }}
+      {{ field(form.password) }}
+      <p class="text-xs text-slate-400 -mt-3 mb-3">The student must change this on first login.</p>
+      <div class="mt-6">{{ submit(form.submit) }}</div>
+    </form>
+  </div>
+</div>
+{% endblock %}

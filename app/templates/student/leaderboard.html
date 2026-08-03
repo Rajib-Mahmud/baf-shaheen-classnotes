@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}Leaderboard{% endblock %}
+{% block content %}
+<h1 class="text-xl font-bold mb-1">Leaderboard — {{ section.label }}</h1>
+<p class="text-sm text-slate-500 mb-6">Top contributors this term. Upload notes (+10), earn upvotes (+2) and downloads (+1).</p>
+
+{% if current_user.role == 'student' %}
+<div class="bg-gradient-to-r from-sky-900 to-sky-700 text-white rounded-2xl p-5 mb-6 flex items-center justify-between">
+  <div>
+    <p class="text-sky-200 text-sm">Your points</p>
+    <p class="text-3xl font-bold">{{ my_points }}</p>
+  </div>
+  <span class="text-sm font-semibold rounded-lg px-3 py-1.5 {{ tier_css }}">{{ tier_name }}</span>
+</div>
+{% endif %}
+
+<div class="bg-white rounded-xl shadow-sm ring-1 ring-slate-200 overflow-hidden">
+  {% for user, points in rows %}
+  {% set t_name, t_css = tier_for(points) %}
+  <div class="flex items-center gap-4 px-5 py-3 {{ 'bg-sky-50' if user.id == current_user.id }} {{ 'border-t border-slate-100' if not loop.first }}">
+    <span class="w-8 text-center font-bold text-lg
+                 {% if loop.index == 1 %}text-amber-500{% elif loop.index == 2 %}text-slate-400{% elif loop.index == 3 %}text-orange-400{% else %}text-slate-300{% endif %}">
+      {% if loop.index <= 3 %}{{ ['🥇','🥈','🥉'][loop.index0] }}{% else %}{{ loop.index }}{% endif %}
+    </span>
+    <div class="flex-1 min-w-0">
+      <p class="font-medium text-sm truncate">{{ user.full_name }}{% if user.id == current_user.id %} <span class="text-sky-600 text-xs">(you)</span>{% endif %}</p>
+      <p class="text-xs text-slate-400 font-mono">{{ user.login_id }}</p>
+    </div>
+    <span class="text-[10px] uppercase font-bold rounded-md px-1.5 py-0.5 {{ t_css }}">{{ t_name }}</span>
+    <span class="font-bold text-slate-700 w-14 text-right">{{ points }}</span>
+  </div>
+  {% else %}
+  <p class="px-5 py-10 text-center text-sm text-slate-400">No points earned yet — upload the first note to take the lead!</p>
+  {% endfor %}
+</div>
+{% endblock %}

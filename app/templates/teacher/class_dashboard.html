@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% from "_macros.html" import note_card %}
+{% block title %}My class{% endblock %}
+{% block content %}
+<div class="flex flex-wrap items-center justify-between gap-3 mb-6">
+  <div>
+    <h1 class="text-xl font-bold">{{ current_user.section.label if current_user.section else 'My class' }}</h1>
+    <p class="text-sm text-slate-500">Class teacher view</p>
+  </div>
+  <div class="flex gap-2">
+    <a href="{{ url_for('student.leaderboard') }}" class="bg-white ring-1 ring-slate-300 hover:bg-slate-50 rounded-lg px-3 py-1.5 text-sm">Leaderboard</a>
+    <a href="{{ url_for('teacher.reports') }}"
+       class="rounded-lg px-3 py-1.5 text-sm font-medium {{ 'bg-red-600 hover:bg-red-500 text-white' if open_reports else 'bg-white ring-1 ring-slate-300 hover:bg-slate-50' }}">
+      Reports{% if open_reports %} ({{ open_reports }}){% endif %}
+    </a>
+  </div>
+</div>
+
+<div class="grid lg:grid-cols-3 gap-6">
+  <div class="lg:col-span-1 bg-white rounded-lg shadow p-5">
+    <div class="flex items-center justify-between mb-3">
+      <h2 class="font-semibold">Students ({{ students|length }})</h2>
+      <a href="{{ url_for('teacher.create_student') }}"
+         class="bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg px-3 py-1.5 text-xs font-medium">+ Add student</a>
+    </div>
+    <ul class="divide-y divide-slate-100 max-h-96 overflow-y-auto">
+      {% for s in students %}
+      <li class="py-2 flex items-center justify-between text-sm">
+        <span>{{ s.full_name }} <span class="font-mono text-xs text-slate-400">{{ s.login_id }}</span></span>
+        <a href="{{ url_for('teacher.reset_student_password', student_id=s.id) }}"
+           class="text-sky-700 text-xs hover:underline whitespace-nowrap">Reset password</a>
+      </li>
+      {% else %}
+      <li class="py-2 text-sm text-slate-400">No students yet.</li>
+      {% endfor %}
+    </ul>
+  </div>
+
+  <div class="lg:col-span-2">
+    <div class="bg-white rounded-lg shadow p-5 mb-6">
+      <h2 class="font-semibold mb-3">Subjects</h2>
+      <div class="flex flex-wrap gap-2">
+        {% for s in subjects %}
+        <a href="{{ url_for('student.subject', subject_id=s.id) }}"
+           class="bg-slate-100 hover:bg-slate-200 rounded px-3 py-1.5 text-sm">{{ s.name }}</a>
+        {% else %}
+        <span class="text-sm text-slate-400">No subjects yet.</span>
+        {% endfor %}
+      </div>
+    </div>
+
+    <h2 class="font-semibold mb-3">Recent notes</h2>
+    <div class="grid sm:grid-cols-2 md:grid-cols-3 gap-4">
+      {% for n in recent_notes %}
+        {{ note_card(n) }}
+      {% else %}
+        <p class="text-sm text-slate-400">No notes yet.</p>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+{% endblock %}

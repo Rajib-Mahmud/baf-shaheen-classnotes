@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% from "_macros.html" import note_card %}
+{% block title %}Search{% endblock %}
+{% block content %}
+<h1 class="text-xl font-bold mb-4">Search notes</h1>
+<form method="get" class="mb-6 flex gap-2">
+  <input name="q" value="{{ q }}" placeholder="Title, subject or chapter…"
+         class="flex-1 rounded border border-slate-300 px-3 py-2 text-sm bg-white">
+  <button class="bg-sky-800 hover:bg-sky-700 text-white rounded px-4 py-2 text-sm">Search</button>
+</form>
+
+{% if q %}
+<p class="text-sm text-slate-500 mb-4">{{ results|length }} result{{ 's' if results|length != 1 }} for “{{ q }}”</p>
+<div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+  {% for n in results %}
+    {{ note_card(n) }}
+  {% else %}
+    <p class="text-sm text-slate-400 col-span-full">Nothing found.</p>
+  {% endfor %}
+</div>
+{% endif %}
+{% endblock %}

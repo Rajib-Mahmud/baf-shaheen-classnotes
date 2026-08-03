@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% from "_macros.html" import field, submit %}
+{% block title %}Classes{% endblock %}
+{% block content %}
+<h1 class="text-xl font-bold mb-6">Classes</h1>
+<div class="grid md:grid-cols-2 gap-6">
+  <div class="bg-white rounded-lg shadow p-5">
+    <h2 class="font-semibold mb-4">Add class</h2>
+    <form method="post" novalidate>
+      {{ form.hidden_tag() }}
+      {{ field(form.name) }}
+      {{ submit(form.submit) }}
+    </form>
+  </div>
+  <div class="bg-white rounded-lg shadow p-5">
+    <h2 class="font-semibold mb-4">Existing classes</h2>
+    <ul class="divide-y divide-slate-100">
+      {% for c in classes %}
+      <li class="py-2 flex items-center justify-between">
+        <span>{{ c.name }} <span class="text-xs text-slate-400">({{ c.sections|length }} section{{ 's' if c.sections|length != 1 }})</span></span>
+        <form method="post" action="{{ url_for('admin.delete_class', class_id=c.id) }}"
+              onsubmit="return confirm('Delete {{ c.name }}?')">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button class="text-red-600 text-xs hover:underline">Delete</button>
+        </form>
+      </li>
+      {% else %}
+      <li class="py-2 text-sm text-slate-400">No classes yet.</li>
+      {% endfor %}
+    </ul>
+  </div>
+</div>
+{% endblock %}

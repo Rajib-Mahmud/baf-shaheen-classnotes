@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block title %}Import result{% endblock %}
+{% block content %}
+<h1 class="text-xl font-bold mb-2">Import result — {{ section.label }}</h1>
+<p class="text-sm text-red-600 mb-6 font-medium">
+  Save this page now: generated passwords are shown only once.
+</p>
+
+{% if created %}
+<div class="bg-white rounded-lg shadow overflow-x-auto mb-6">
+  <table class="w-full text-sm">
+    <thead class="bg-slate-50 text-left text-slate-500">
+      <tr><th class="px-4 py-2">Login ID</th><th class="px-4 py-2">Name</th><th class="px-4 py-2">Initial password</th></tr>
+    </thead>
+    <tbody class="divide-y divide-slate-100">
+      {% for login_id, name, password in created %}
+      <tr>
+        <td class="px-4 py-2 font-mono text-xs">{{ login_id }}</td>
+        <td class="px-4 py-2">{{ name }}</td>
+        <td class="px-4 py-2 font-mono text-xs">{{ password }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+<p class="text-sm text-slate-500 mb-6">{{ created|length }} student(s) created. Each must change their password on first login.</p>
+{% else %}
+<p class="text-sm text-slate-500 mb-6">No students were created.</p>
+{% endif %}
+
+{% if errors %}
+<div class="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+  <h2 class="font-semibold text-red-800 text-sm mb-2">Skipped rows</h2>
+  <ul class="text-sm text-red-700 list-disc list-inside">
+    {% for e in errors %}<li>{{ e }}</li>{% endfor %}
+  </ul>
+</div>
+{% endif %}
+
+<a href="{{ url_for('admin.users') }}" class="text-sky-700 text-sm">← Back to users</a>
+{% endblock %}

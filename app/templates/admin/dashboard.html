@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}Admin{% endblock %}
+{% block content %}
+<h1 class="text-xl font-bold mb-6">Admin dashboard</h1>
+<div class="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-8">
+  {% for label, value in [('Classes', stats.classes), ('Sections', stats.sections),
+                          ('Subjects', stats.subjects), ('Students', stats.students),
+                          ('Teachers', stats.teachers), ('Notes', stats.notes)] %}
+  <div class="bg-white rounded-lg shadow p-4">
+    <div class="text-2xl font-bold">{{ value }}</div>
+    <div class="text-sm text-slate-500">{{ label }}</div>
+  </div>
+  {% endfor %}
+  <a href="{{ url_for('teacher.reports') }}" class="rounded-lg shadow p-4 block transition
+     {{ 'bg-red-600 text-white hover:bg-red-500' if stats.open_reports else 'bg-white hover:bg-slate-50' }}">
+    <div class="text-2xl font-bold">{{ stats.open_reports }}</div>
+    <div class="text-sm {{ 'text-red-100' if stats.open_reports else 'text-slate-500' }}">Open reports</div>
+  </a>
+</div>
+<div class="flex flex-wrap gap-3">
+  <a href="{{ url_for('admin.classes') }}" class="bg-sky-800 hover:bg-sky-700 text-white rounded px-4 py-2 text-sm">Manage classes</a>
+  <a href="{{ url_for('admin.sections') }}" class="bg-sky-800 hover:bg-sky-700 text-white rounded px-4 py-2 text-sm">Manage sections</a>
+  <a href="{{ url_for('admin.subjects') }}" class="bg-sky-800 hover:bg-sky-700 text-white rounded px-4 py-2 text-sm">Manage subjects</a>
+  <a href="{{ url_for('admin.users') }}" class="bg-sky-800 hover:bg-sky-700 text-white rounded px-4 py-2 text-sm">Manage users</a>
+  <a href="{{ url_for('admin.create_user') }}" class="bg-emerald-700 hover:bg-emerald-600 text-white rounded px-4 py-2 text-sm">+ New user</a>
+  <a href="{{ url_for('admin.import_students') }}" class="bg-emerald-700 hover:bg-emerald-600 text-white rounded px-4 py-2 text-sm">Import students (CSV)</a>
+</div>
+{% endblock %}

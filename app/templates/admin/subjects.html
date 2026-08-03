@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% from "_macros.html" import field, submit %}
+{% block title %}Subjects{% endblock %}
+{% block content %}
+<h1 class="text-xl font-bold mb-6">Subjects</h1>
+<div class="bg-white rounded-lg shadow p-5 mb-6">
+  <h2 class="font-semibold mb-4">Add subject</h2>
+  <form method="post" novalidate class="grid sm:grid-cols-3 gap-4 items-end">
+    {{ form.hidden_tag() }}
+    <div>{{ field(form.name) }}</div>
+    <div>{{ field(form.section_id) }}</div>
+    <div>{{ field(form.teacher_id) }}</div>
+    <div class="sm:col-span-3">{{ submit(form.submit) }}</div>
+  </form>
+</div>
+
+<div class="bg-white rounded-lg shadow overflow-x-auto">
+  <table class="w-full text-sm">
+    <thead class="bg-slate-50 text-left text-slate-500">
+      <tr>
+        <th class="px-4 py-2">Subject</th>
+        <th class="px-4 py-2">Class · Section</th>
+        <th class="px-4 py-2">Assigned teacher</th>
+        <th class="px-4 py-2">Chapters</th>
+        <th class="px-4 py-2"></th>
+      </tr>
+    </thead>
+    <tbody class="divide-y divide-slate-100">
+      {% for s in subjects %}
+      <tr>
+        <td class="px-4 py-2 font-medium">{{ s.name }}</td>
+        <td class="px-4 py-2">{{ s.section.label }}</td>
+        <td class="px-4 py-2">
+          <form method="post" action="{{ url_for('admin.assign_teacher', subject_id=s.id) }}" class="flex gap-2 items-center">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <select name="teacher_id" class="rounded border border-slate-300 px-2 py-1 text-xs bg-white">
+              {% for tid, tname in form.teacher_id.choices %}
+                <option value="{{ tid }}" {% if s.teacher_id == tid or (not s.teacher_id and tid == 0) %}selected{% endif %}>{{ tname }}</option>
+              {% endfor %}
+            </select>
+            <button class="text-sky-700 text-xs hover:underline">Save</button>
+          </form>
+        </td>
+        <td class="px-4 py-2">{{ s.chapters|length }}</td>
+        <td class="px-4 py-2 text-right">
+          <form method="post" action="{{ url_for('admin.delete_subject', subject_id=s.id) }}"
+                onsubmit="return confirm('Delete {{ s.name }}?')">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button class="text-red-600 text-xs hover:underline">Delete</button>
+          </form>
+        </td>
+      </tr>
+      {% else %}
+      <tr><td colspan="5" class="px-4 py-3 text-slate-400">No subjects yet.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

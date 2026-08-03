@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% from "_macros.html" import field, submit %}
+{% block title %}New user{% endblock %}
+{% block content %}
+<div class="max-w-md mx-auto">
+  <div class="bg-white rounded-lg shadow p-6">
+    <h1 class="text-lg font-bold mb-4">Create user</h1>
+    <form method="post" novalidate>
+      {{ form.hidden_tag() }}
+      {{ field(form.role) }}
+      {{ field(form.login_id) }}
+      <p class="text-xs text-slate-400 -mt-3 mb-3">For students, use the roll-based ID (e.g. 9A-042).</p>
+      {{ field(form.full_name) }}
+      {{ field(form.section_id) }}
+      <p class="text-xs text-slate-400 -mt-3 mb-3">Required for students and class teachers. Subject teachers get scope via subject assignment.</p>
+      {{ field(form.password) }}
+      <p class="text-xs text-slate-400 -mt-3 mb-3">The user must change this on first login.</p>
+      <div class="mt-6">{{ submit(form.submit) }}</div>
+    </form>
+  </div>
+</div>
+{% endblock %}

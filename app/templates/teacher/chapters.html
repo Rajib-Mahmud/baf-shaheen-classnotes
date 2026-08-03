@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% from "_macros.html" import field, submit %}
+{% block title %}Chapters — {{ subject.name }}{% endblock %}
+{% block content %}
+<h1 class="text-xl font-bold mb-1">{{ subject.name }} — chapters</h1>
+<p class="text-sm text-slate-500 mb-6">{{ subject.section.label }}</p>
+
+<div class="grid md:grid-cols-2 gap-6">
+  <div class="bg-white rounded-lg shadow p-5">
+    <h2 class="font-semibold mb-4">Add chapter</h2>
+    <form method="post" novalidate>
+      {{ form.hidden_tag() }}
+      {{ field(form.title) }}
+      {{ field(form.order_index) }}
+      {{ submit(form.submit) }}
+    </form>
+  </div>
+  <div class="bg-white rounded-lg shadow p-5">
+    <h2 class="font-semibold mb-4">Chapters</h2>
+    <ul class="divide-y divide-slate-100">
+      {% for ch in subject.chapters %}
+      <li class="py-2 flex items-center justify-between gap-2">
+        <div>
+          <a href="{{ url_for('student.chapter', chapter_id=ch.id) }}" class="hover:underline">{{ ch.title }}</a>
+          <span class="text-xs text-slate-400">· {{ ch.notes|length }} note{{ 's' if ch.notes|length != 1 }} · order {{ ch.order_index }}</span>
+        </div>
+        <div class="flex gap-2 items-center whitespace-nowrap">
+          <a href="{{ url_for('notes.teacher_upload', chapter=ch.id) }}" class="text-emerald-700 text-xs hover:underline">Upload</a>
+          <a href="{{ url_for('teacher.edit_chapter', chapter_id=ch.id) }}" class="text-sky-700 text-xs hover:underline">Edit</a>
+          <form method="post" action="{{ url_for('teacher.delete_chapter', chapter_id=ch.id) }}"
+                onsubmit="return confirm('Delete this chapter?')">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button class="text-red-600 text-xs hover:underline">Delete</button>
+          </form>
+        </div>
+      </li>
+      {% else %}
+      <li class="py-2 text-sm text-slate-400">No chapters yet.</li>
+      {% endfor %}
+    </ul>
+  </div>
+</div>
+{% endblock %}

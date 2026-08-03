@@ -1,0 +1,161 @@
+{% extends "base.html" %}
+{% from "_macros.html" import breadcrumb %}
+{% block title %}{{ note.title }}{% endblock %}
+{% block content %}
+{{ breadcrumb([
+  (note.chapter.subject.name, url_for('student.subject', subject_id=note.chapter.subject_id)),
+  (note.chapter.title, url_for('student.chapter', chapter_id=note.chapter_id)),
+  (note.title, None),
+]) }}
+
+{% if note.is_hidden %}
+<div class="mb-4 rounded-lg bg-amber-50 border border-amber-300 text-amber-900 px-4 py-3 text-sm flex flex-wrap items-center justify-between gap-2">
+  <span>⚠ This note is <b>hidden from students</b> (moderation).</span>
+  {% if is_moderator %}
+  <form method="post" action="{{ url_for('teacher.unhide_note', note_id=note.id) }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <button class="bg-amber-600 hover:bg-amber-500 text-white rounded-lg px-3 py-1.5 text-xs font-medium">Unhide</button>
+  </form>
+  {% endif %}
+</div>
+{% endif %}
+
+<div class="flex flex-wrap items-start justify-between gap-3 mb-3">
+  <div>
+    <h1 class="text-xl font-bold leading-tight">{{ note.title }}</h1>
+    <p class="text-sm text-slate-500 mt-1 flex flex-wrap items-center gap-1.5">
+      {% if note.is_official %}
+        <span class="text-[10px] uppercase font-bold bg-amber-400/95 text-amber-950 rounded-md px-1.5 py-0.5">★ Official</span>
+      {% else %}
+        <span class="text-[10px] uppercase font-bold bg-slate-200 text-slate-600 rounded-md px-1.5 py-0.5">Student note</span>
+      {% endif %}
+      <span>by <span class="font-medium text-slate-700">{{ note.uploader.full_name }}</span></span>
+      <span>· {{ note.created_at.strftime('%d %b %Y') }}</span>
+      <span>· {{ note.images|length }} page{{ 's' if note.images|length != 1 }}</span>
+    </p>
+  </div>
+  <div class="flex gap-2 items-center">
+    {% if note.uploader_id != current_user.id %}
+    <form method="post" action="{{ url_for('notes.vote_note', note_id=note.id) }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <button class="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium transition
+                     {% if my_vote %}bg-sky-800 text-white hover:bg-sky-700{% else %}bg-white ring-1 ring-slate-300 hover:bg-sky-50 text-slate-700{% endif %}">
+        ▲ {{ note.votes|length }}
+      </button>
+    </form>
+    {% else %}
+    <span class="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium bg-slate-100 text-slate-500">▲ {{ note.votes|length }}</span>
+    {% endif %}
+    {% if can_manage %}
+    <a href="{{ url_for('notes.edit_note', note_id=note.id) }}"
+       class="bg-white ring-1 ring-slate-300 hover:bg-slate-50 rounded-lg px-3 py-1.5 text-sm">Edit</a>
+    <form method="post" action="{{ url_for('notes.delete_note', note_id=note.id) }}"
+          onsubmit="return confirm('Delete this note and all its photos?')">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <button class="bg-red-600 hover:bg-red-500 text-white rounded-lg px-3 py-1.5 text-sm">Delete</button>
+    </form>
+    {% endif %}
+  </div>
+</div>
+
+{% if note.description %}
+<p class="text-sm text-slate-600 mb-4 whitespace-pre-line bg-white rounded-lg ring-1 ring-slate-200 px-4 py-3">{{ note.description }}</p>
+{% endif %}
+
+<div class="space-y-5 mt-5">
+  {% for img in note.images %}
+  <div class="bg-white rounded-xl shadow-sm ring-1 ring-slate-200 p-3">
+    <img src="{{ url_for('notes.serve_image', image_id=img.id) }}"
+         alt="{{ note.title }} — page {{ loop.index }}"
+         class="w-full rounded-lg cursor-zoom-in lightbox-img" data-index="{{ loop.index0 }}" loading="lazy">
+    <div class="flex items-center justify-between mt-2 text-sm px-1">
+      <span class="text-slate-400 text-xs">Page {{ loop.index }} of {{ note.images|length }} · tap photo to zoom</span>
+      <a href="{{ url_for('notes.serve_image', image_id=img.id, download=1) }}"
+         class="text-sky-700 hover:underline font-medium">Download</a>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+
+{% if note.uploader_id != current_user.id %}
+<div class="mt-8">
+  {% if already_reported %}
+  <p class="text-xs text-slate-400">You reported this note — a teacher will review it.</p>
+  {% else %}
+  <details class="group">
+    <summary class="text-xs text-slate-400 hover:text-red-600 cursor-pointer select-none">⚑ Report a problem with this note</summary>
+    <form method="post" action="{{ url_for('notes.report_note', note_id=note.id) }}"
+          class="mt-3 bg-white rounded-xl ring-1 ring-slate-200 p-4 max-w-md">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <label class="block text-sm font-medium mb-1 text-slate-700">Reason</label>
+      <select name="reason" class="w-full rounded-lg border-slate-300 border px-3 py-2 text-sm bg-white mb-3" required>
+        {% for key, label in report_reasons.items() %}
+        <option value="{{ key }}">{{ label }}</option>
+        {% endfor %}
+      </select>
+      <label class="block text-sm font-medium mb-1 text-slate-700">Details (optional)</label>
+      <textarea name="comment" rows="2" maxlength="500" placeholder="What's wrong?"
+                class="w-full rounded-lg border-slate-300 border px-3 py-2 text-sm mb-3"></textarea>
+      <button class="bg-red-600 hover:bg-red-500 text-white rounded-lg px-4 py-2 text-sm font-medium">Submit report</button>
+    </form>
+  </details>
+  {% endif %}
+</div>
+{% endif %}
+
+<!-- Lightbox -->
+<div id="lightbox" class="hidden fixed inset-0 z-50 bg-black/95 flex-col" role="dialog" aria-modal="true">
+  <div class="flex items-center justify-between px-4 py-3 text-white text-sm shrink-0">
+    <span id="lb-counter"></span>
+    <button onclick="lbClose()" class="p-2 hover:bg-white/10 rounded-lg text-2xl leading-none" aria-label="Close">&times;</button>
+  </div>
+  <div class="flex-1 min-h-0 flex items-center justify-center relative px-2 pb-4">
+    <button onclick="lbNav(-1)" class="absolute left-2 z-10 text-white bg-white/10 hover:bg-white/20 rounded-full w-10 h-10 text-xl" aria-label="Previous">‹</button>
+    <img id="lb-img" src="" alt="" class="max-h-full max-w-full object-contain select-none">
+    <button onclick="lbNav(1)" class="absolute right-2 z-10 text-white bg-white/10 hover:bg-white/20 rounded-full w-10 h-10 text-xl" aria-label="Next">›</button>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+(function () {
+  var srcs = [{% for img in note.images %}"{{ url_for('notes.serve_image', image_id=img.id) }}"{{ "," if not loop.last }}{% endfor %}];
+  var idx = 0;
+  var lb = document.getElementById('lightbox');
+  var lbImg = document.getElementById('lb-img');
+  var counter = document.getElementById('lb-counter');
+
+  function show(i) {
+    idx = (i + srcs.length) % srcs.length;
+    lbImg.src = srcs[idx];
+    counter.textContent = 'Page ' + (idx + 1) + ' of ' + srcs.length;
+  }
+  window.lbClose = function () { lb.classList.add('hidden'); lb.classList.remove('flex'); document.body.style.overflow = ''; };
+  window.lbNav = function (d) { show(idx + d); };
+
+  document.querySelectorAll('.lightbox-img').forEach(function (el) {
+    el.addEventListener('click', function () {
+      show(parseInt(el.dataset.index, 10));
+      lb.classList.remove('hidden'); lb.classList.add('flex');
+      document.body.style.overflow = 'hidden';
+    });
+  });
+  document.addEventListener('keydown', function (e) {
+    if (lb.classList.contains('hidden')) return;
+    if (e.key === 'Escape') lbClose();
+    if (e.key === 'ArrowLeft') lbNav(-1);
+    if (e.key === 'ArrowRight') lbNav(1);
+  });
+  // Simple swipe support
+  var startX = null;
+  lb.addEventListener('touchstart', function (e) { startX = e.touches[0].clientX; }, {passive: true});
+  lb.addEventListener('touchend', function (e) {
+    if (startX === null) return;
+    var dx = e.changedTouches[0].clientX - startX;
+    if (Math.abs(dx) > 50) lbNav(dx < 0 ? 1 : -1);
+    startX = null;
+  }, {passive: true});
+  lb.addEventListener('click', function (e) { if (e.target === lb || e.target.id === 'lb-img') return; });
+})();
+</script>
+{% endblock %}

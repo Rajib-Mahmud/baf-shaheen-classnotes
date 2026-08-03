@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% from "_macros.html" import field, submit %}
+{% block title %}Edit note{% endblock %}
+{% block content %}
+<div class="max-w-lg mx-auto">
+  <div class="bg-white rounded-lg shadow p-6">
+    <h1 class="text-lg font-bold mb-4">Edit note</h1>
+    <form method="post" novalidate>
+      {{ form.hidden_tag() }}
+      {{ field(form.title) }}
+      {{ field(form.description) }}
+      <div class="mt-6">{{ submit(form.submit) }}</div>
+    </form>
+  </div>
+</div>
+{% endblock %}

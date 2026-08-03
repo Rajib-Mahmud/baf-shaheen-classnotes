@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% block title %}Reports{% endblock %}
+{% block content %}
+<div class="flex flex-wrap items-center justify-between gap-3 mb-6">
+  <h1 class="text-xl font-bold">Reported notes</h1>
+  <div class="flex gap-2 text-sm">
+    <a href="{{ url_for('teacher.reports') }}" class="px-3 py-1.5 rounded-lg {{ 'bg-sky-800 text-white' if show != 'all' else 'bg-white ring-1 ring-slate-200' }}">Open</a>
+    <a href="{{ url_for('teacher.reports', show='all') }}" class="px-3 py-1.5 rounded-lg {{ 'bg-sky-800 text-white' if show == 'all' else 'bg-white ring-1 ring-slate-200' }}">All</a>
+  </div>
+</div>
+
+<div class="space-y-4">
+  {% for r in reports %}
+  <div class="bg-white rounded-xl shadow-sm ring-1 ring-slate-200 p-4 {{ 'opacity-60' if r.status == 'resolved' }}">
+    <div class="flex flex-wrap items-start justify-between gap-3">
+      <div class="min-w-0">
+        <div class="flex flex-wrap items-center gap-2 mb-1">
+          <span class="text-[10px] uppercase font-bold rounded-md px-1.5 py-0.5
+                       {% if r.reason == 'inappropriate' %}bg-red-100 text-red-700
+                       {% elif r.reason == 'wrong_info' %}bg-amber-100 text-amber-800
+                       {% else %}bg-slate-100 text-slate-600{% endif %}">{{ r.reason_label }}</span>
+          {% if r.status == 'resolved' %}<span class="text-[10px] uppercase font-bold bg-emerald-100 text-emerald-700 rounded-md px-1.5 py-0.5">Resolved</span>{% endif %}
+          {% if r.note.is_hidden %}<span class="text-[10px] uppercase font-bold bg-slate-800 text-white rounded-md px-1.5 py-0.5">Note hidden</span>{% endif %}
+        </div>
+        <a href="{{ url_for('notes.view_note', note_id=r.note_id) }}" class="font-medium text-sm text-sky-800 hover:underline">{{ r.note.title }}</a>
+        <p class="text-xs text-slate-500 mt-0.5">
+          {{ r.note.chapter.subject.section.label }} · {{ r.note.chapter.subject.name }} · uploaded by {{ r.note.uploader.full_name }}
+        </p>
+        <p class="text-xs text-slate-500 mt-1">
+          Reported by <b>{{ r.reporter.full_name }}</b> · {{ r.created_at.strftime('%d %b %Y, %H:%M') }} UTC
+        </p>
+        {% if r.comment %}<p class="text-sm text-slate-600 mt-1.5 bg-slate-50 rounded-lg px-3 py-2">"{{ r.comment }}"</p>{% endif %}
+      </div>
+      {% if r.status == 'open' %}
+      <div class="flex flex-wrap gap-2 shrink-0">
+        {% if not r.note.is_hidden %}
+        <form method="post" action="{{ url_for('teacher.hide_reported_note', report_id=r.id) }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button class="bg-amber-500 hover:bg-amber-400 text-white rounded-lg px-3 py-1.5 text-xs font-medium">Hide note</button>
+        </form>
+        {% endif %}
+        <form method="post" action="{{ url_for('teacher.delete_reported_note', report_id=r.id) }}"
+              onsubmit="return confirm('Permanently delete this note and its photos?')">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button class="bg-red-600 hover:bg-red-500 text-white rounded-lg px-3 py-1.5 text-xs font-medium">Delete note</button>
+        </form>
+        <form method="post" action="{{ url_for('teacher.dismiss_report', report_id=r.id) }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button class="bg-white ring-1 ring-slate-300 hover:bg-slate-50 rounded-lg px-3 py-1.5 text-xs font-medium">Dismiss</button>
+        </form>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+  {% else %}
+  <div class="bg-white rounded-xl ring-1 ring-slate-200 p-10 text-center">
+    <p class="text-sm text-slate-400">No {{ 'open ' if show != 'all' }}reports. 🎉</p>
+  </div>
+  {% endfor %}
+</div>
+{% endblock %}

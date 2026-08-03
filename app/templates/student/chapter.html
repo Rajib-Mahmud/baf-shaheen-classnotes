@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% from "_macros.html" import note_card, breadcrumb %}
+{% block title %}{{ chapter.title }}{% endblock %}
+{% block content %}
+{{ breadcrumb([
+  (chapter.subject.name, url_for('student.subject', subject_id=chapter.subject_id)),
+  (chapter.title, None),
+]) }}
+
+<div class="flex flex-wrap items-center justify-between gap-3 mb-5">
+  <h1 class="text-xl font-bold">{{ chapter.title }}</h1>
+  {% if current_user.role in ('student', 'subject_teacher', 'super_admin') %}
+  <a href="{{ url_for('notes.upload', chapter=chapter.id) }}"
+     class="bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg px-4 py-2 text-sm font-medium">+ Upload here</a>
+  {% endif %}
+</div>
+
+{% set official_count = notes|selectattr('is_official')|list|length %}
+{% if notes %}
+<div class="flex gap-2 mb-4 text-sm" id="filter-tabs">
+  <button data-filter="all" class="tab-btn px-3 py-1.5 rounded-lg bg-sky-800 text-white">All ({{ notes|length }})</button>
+  <button data-filter="official" class="tab-btn px-3 py-1.5 rounded-lg bg-white ring-1 ring-slate-200 hover:bg-slate-50">★ Official ({{ official_count }})</button>
+  <button data-filter="student" class="tab-btn px-3 py-1.5 rounded-lg bg-white ring-1 ring-slate-200 hover:bg-slate-50">Student ({{ notes|length - official_count }})</button>
+</div>
+{% endif %}
+
+<div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4" id="notes-grid">
+  {% for n in notes %}
+    <div class="note-item" data-kind="{{ 'official' if n.is_official else 'student' }}">{{ note_card(n) }}</div>
+  {% else %}
+    <div class="col-span-full bg-white rounded-xl ring-1 ring-slate-200 p-8 text-center">
+      <p class="text-slate-500 text-sm mb-3">No notes in this chapter yet.</p>
+      {% if current_user.role in ('student', 'subject_teacher', 'super_admin') %}
+      <a href="{{ url_for('notes.upload', chapter=chapter.id) }}" class="text-sky-700 font-medium text-sm hover:underline">Be the first to upload →</a>
+      {% endif %}
+    </div>
+  {% endfor %}
+</div>
+<p id="filter-empty" class="hidden text-sm text-slate-400 mt-2">No notes of this type yet.</p>
+{% endblock %}
+{% block scripts %}
+<script>
+(function () {
+  var tabs = document.querySelectorAll('.tab-btn');
+  var items = document.querySelectorAll('.note-item');
+  var empty = document.getElementById('filter-empty');
+  tabs.forEach(function (t) {
+    t.addEventListener('click', function () {
+      tabs.forEach(function (o) { o.className = 'tab-btn px-3 py-1.5 rounded-lg bg-white ring-1 ring-slate-200 hover:bg-slate-50'; });
+      t.className = 'tab-btn px-3 py-1.5 rounded-lg bg-sky-800 text-white';
+      var f = t.dataset.filter, visible = 0;
+      items.forEach(function (el) {
+        var show = f === 'all' || el.dataset.kind === f;
+        el.style.display = show ? '' : 'none';
+        if (show) visible++;
+      });
+      if (empty) empty.classList.toggle('hidden', visible > 0 || items.length === 0);
+    });
+  });
+})();
+</script>
+{% endblock %}

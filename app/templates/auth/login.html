@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+{% from "_macros.html" import field %}
+{% set panels = {
+  'student': {'title': 'Student Login', 'hint': 'Sign in with your roll-based ID.', 'accent': 'sky'},
+  'teacher': {'title': 'Teacher Login', 'hint': 'For subject teachers and class teachers.', 'accent': 'emerald'},
+  'admin':   {'title': 'Admin Login',   'hint': 'Authorised administrators only.', 'accent': 'slate'},
+} %}
+{% set p = panels[panel] %}
+{% block title %}{{ p.title }}{% endblock %}
+{% block content %}
+<div class="max-w-sm mx-auto mt-6 sm:mt-12">
+  <div class="text-center mb-5">
+    <img src="{{ url_for('static', filename='img/logo.png') }}" alt="BAF Shaheen College Dhaka"
+         class="h-20 w-auto mx-auto mb-3 drop-shadow-md">
+    <h1 class="text-xl font-bold">ClassNotes</h1>
+    <p class="text-sm text-slate-500">BAF Shaheen College Dhaka</p>
+    <p class="text-xs text-slate-400 mt-0.5">শিক্ষা · সংযম · শৃঙ্খলা</p>
+  </div>
+
+  <!-- Panel tabs -->
+  <div class="grid grid-cols-3 gap-1 bg-slate-200/70 rounded-xl p-1 mb-4 text-sm font-medium">
+    {% for key, meta in panels.items() %}
+      <a href="{{ url_for('auth.login', panel=key, next=request.args.get('next')) }}"
+         class="text-center rounded-lg py-2 transition
+                {% if key == panel %}bg-white shadow text-slate-900{% else %}text-slate-500 hover:text-slate-800{% endif %}">
+        {{ key|capitalize }}
+      </a>
+    {% endfor %}
+  </div>
+
+  <div class="bg-white rounded-2xl shadow-lg ring-1 ring-slate-200 p-7">
+    <div class="mb-5">
+      <h2 class="font-bold text-lg
+                 {% if panel == 'teacher' %}text-emerald-800{% elif panel == 'admin' %}text-slate-800{% else %}text-sky-800{% endif %}">
+        {{ p.title }}</h2>
+      <p class="text-xs text-slate-400">{{ p.hint }}</p>
+    </div>
+    <form method="post" novalidate>
+      {{ form.hidden_tag() }}
+      {% if request.args.get('next') %}
+        <input type="hidden" name="next" value="{{ request.args.get('next') }}">
+      {% endif %}
+      {{ field(form.login_id, autofocus=true, autocomplete="username",
+               placeholder=('e.g. 9A-042' if panel == 'student' else '')) }}
+      <div class="mb-4">
+        {{ form.password.label(class_="block text-sm font-medium mb-1 text-slate-700") }}
+        <div class="relative">
+          {{ form.password(class_="w-full rounded-lg border-slate-300 border px-3 py-2 pr-10 text-sm focus:ring-2 focus:ring-sky-500 focus:border-sky-500 outline-none", autocomplete="current-password", id="pw-input") }}
+          <button type="button" onclick="togglePw()" class="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-1" aria-label="Show password">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+            </svg>
+          </button>
+        </div>
+        {% for err in form.password.errors %}<p class="text-red-600 text-xs mt-1">{{ err }}</p>{% endfor %}
+      </div>
+      <button type="submit"
+              class="w-full text-white rounded-lg px-5 py-2.5 text-sm font-semibold transition
+                     {% if panel == 'teacher' %}bg-emerald-700 hover:bg-emerald-600 active:bg-emerald-800
+                     {% elif panel == 'admin' %}bg-slate-800 hover:bg-slate-700 active:bg-slate-900
+                     {% else %}bg-sky-800 hover:bg-sky-700 active:bg-sky-900{% endif %}">
+        Sign in
+      </button>
+    </form>
+    <p class="text-xs text-slate-400 mt-5 text-center leading-relaxed">
+      {% if panel == 'student' %}
+        Accounts are issued by your teacher or the admin.<br>Forgot your password? Ask your class teacher to reset it.
+      {% elif panel == 'teacher' %}
+        Teacher accounts are issued by the administrator.<br>Forgot your password? Contact the admin.
+      {% else %}
+        Restricted access. All sign-ins are rate-limited.
+      {% endif %}
+    </p>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+  function togglePw() {
+    var i = document.getElementById('pw-input');
+    i.type = i.type === 'password' ? 'text' : 'password';
+  }
+</script>
+{% endblock %}

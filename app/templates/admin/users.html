@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block title %}Users{% endblock %}
+{% block content %}
+<div class="flex items-center justify-between mb-6">
+  <h1 class="text-xl font-bold">Users</h1>
+  <div class="flex gap-2">
+    <a href="{{ url_for('admin.create_user') }}" class="bg-emerald-700 hover:bg-emerald-600 text-white rounded px-3 py-1.5 text-sm">+ New user</a>
+    <a href="{{ url_for('admin.import_students') }}" class="bg-emerald-700 hover:bg-emerald-600 text-white rounded px-3 py-1.5 text-sm">Import CSV</a>
+  </div>
+</div>
+
+<div class="mb-4 flex gap-2 text-sm">
+  <a href="{{ url_for('admin.users') }}" class="px-3 py-1 rounded {{ 'bg-sky-800 text-white' if not role_filter else 'bg-white' }}">All</a>
+  {% for r, label in [('student', 'Students'), ('subject_teacher', 'Subject teachers'), ('class_teacher', 'Class teachers'), ('super_admin', 'Admins')] %}
+    <a href="{{ url_for('admin.users', role=r) }}" class="px-3 py-1 rounded {{ 'bg-sky-800 text-white' if role_filter == r else 'bg-white' }}">{{ label }}</a>
+  {% endfor %}
+</div>
+
+<div class="bg-white rounded-lg shadow overflow-x-auto">
+  <table class="w-full text-sm">
+    <thead class="bg-slate-50 text-left text-slate-500">
+      <tr>
+        <th class="px-4 py-2">Login ID</th>
+        <th class="px-4 py-2">Name</th>
+        <th class="px-4 py-2">Role</th>
+        <th class="px-4 py-2">Class · Section</th>
+        <th class="px-4 py-2">Status</th>
+        <th class="px-4 py-2"></th>
+      </tr>
+    </thead>
+    <tbody class="divide-y divide-slate-100">
+      {% for u in users %}
+      <tr class="{{ 'opacity-50' if not u.is_active }}">
+        <td class="px-4 py-2 font-mono text-xs">{{ u.login_id }}</td>
+        <td class="px-4 py-2">{{ u.full_name }}</td>
+        <td class="px-4 py-2">{{ u.role_label }}</td>
+        <td class="px-4 py-2">{{ u.section.label if u.section else '—' }}</td>
+        <td class="px-4 py-2">
+          {% if u.is_active %}<span class="text-green-700 text-xs">Active</span>
+          {% else %}<span class="text-red-600 text-xs">Deactivated</span>{% endif %}
+        </td>
+        <td class="px-4 py-2 text-right whitespace-nowrap">
+          <a href="{{ url_for('admin.reset_password', user_id=u.id) }}" class="text-sky-700 text-xs hover:underline mr-2">Reset password</a>
+          {% if u.id != current_user.id %}
+          <form method="post" action="{{ url_for('admin.toggle_active', user_id=u.id) }}" class="inline">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button class="text-xs hover:underline {{ 'text-red-600' if u.is_active else 'text-green-700' }}">
+              {{ 'Deactivate' if u.is_active else 'Activate' }}
+            </button>
+          </form>
+          {% endif %}
+        </td>
+      </tr>
+      {% else %}
+      <tr><td colspan="6" class="px-4 py-3 text-slate-400">No users found.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

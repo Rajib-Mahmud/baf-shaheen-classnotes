@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}My subjects{% endblock %}
+{% block content %}
+<h1 class="text-xl font-bold mb-6">My subjects</h1>
+{% if subjects %}
+<div class="grid sm:grid-cols-2 gap-4">
+  {% for s in subjects %}
+  <div class="bg-white rounded-lg shadow p-5">
+    <h2 class="font-semibold">{{ s.name }}</h2>
+    <p class="text-sm text-slate-500 mb-3">{{ s.section.label }} · {{ s.chapters|length }} chapter{{ 's' if s.chapters|length != 1 }}</p>
+    <div class="flex gap-3 text-sm">
+      <a href="{{ url_for('teacher.chapters', subject_id=s.id) }}" class="text-sky-700 hover:underline">Manage chapters</a>
+      <a href="{{ url_for('student.subject', subject_id=s.id) }}" class="text-sky-700 hover:underline">View notes</a>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% else %}
+<p class="text-slate-500">No subjects assigned to you yet. Ask the admin.</p>
+{% endif %}
+{% endblock %}

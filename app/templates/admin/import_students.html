@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% from "_macros.html" import field, submit %}
+{% block title %}Import students{% endblock %}
+{% block content %}
+<div class="max-w-md mx-auto">
+  <div class="bg-white rounded-lg shadow p-6">
+    <h1 class="text-lg font-bold mb-4">Bulk import students (CSV)</h1>
+    <p class="text-sm text-slate-500 mb-4">
+      CSV columns: <code class="bg-slate-100 px-1 rounded">login_id, full_name, password</code>.
+      The password column is optional — missing passwords are generated and shown once after import.
+      All imported students go into the selected class &amp; section.
+    </p>
+    <form method="post" enctype="multipart/form-data" novalidate>
+      {{ form.hidden_tag() }}
+      {{ field(form.section_id) }}
+      {{ field(form.csv_file) }}
+      <div class="mt-6">{{ submit(form.submit) }}</div>
+    </form>
+  </div>
+</div>
+{% endblock %}
