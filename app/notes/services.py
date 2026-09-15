@@ -1,8 +1,9 @@
-from app.extensions import db
 from sqlalchemy.exc import IntegrityError
+
+from app.extensions import db
 from app.models import Note, NoteVote
-from app.notes.scope import can_view_scope
-from app.points import award, POINTS_UPVOTE
+from app.utils.points import POINTS_UPVOTE, award
+from app.utils.security import can_view_scope
 
 
 class VoteError(Exception):
@@ -39,26 +40,27 @@ def toggle_vote(user, note_id):
             db.delete(NoteVote).filter_by(id=existing.id)
         ).rowcount
         if deleted:
-            # Reverse the amount that was actually recorded, not today's constant.
-            award(note.uploader, -existing.points_awarded, "upvote", note.id)
+            award(note.uploader, -POINTS_UPVOTE, "upvote", note.id)
         voted = False
     else:
         try:
-            db.session.add(NoteVote(
-                note_id=note.id,
-                voter_id=user.id,
-                points_awarded=POINTS_UPVOTE,
-            ))
+            db.session.add(
+                NoteVote(
+                    note_id=note.id,
+                    voter_id=user.id,
+                )
+            )
             award(note.uploader, POINTS_UPVOTE, "upvote", note.id)
             db.session.flush()
             voted = True
         except IntegrityError:
             db.session.rollback()
-            voted = True  # someone else's concurrent insert won; state is "voted"
+            voted = True  # concurrent insert won
 
     db.session.commit()
 
     vote_count = db.session.scalar(
         db.select(db.func.count()).select_from(NoteVote).filter_by(note_id=note.id)
-    )
+    ) or 0
+
     return note, voted, vote_count
