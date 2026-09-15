@@ -18,7 +18,7 @@ def toggle_vote(user, note_id):
     if note is None:
         raise VoteError("Not found.", 404)
 
-    # Same status for out-of-scope AND hidden AND missing — no scope enumeration.
+    
     if note.is_hidden or not can_view_scope(user, note.class_id, note.section_id):
         raise VoteError("Not found.", 404)
 
@@ -28,7 +28,7 @@ def toggle_vote(user, note_id):
     if note.uploader is None:
         raise VoteError("Note has no active uploader.", 409)
 
-    # Row-level lock stops the concurrent-unvote double-award race.
+    
     existing = db.session.scalar(
         db.select(NoteVote)
         .filter_by(note_id=note.id, voter_id=user.id)
@@ -55,8 +55,7 @@ def toggle_vote(user, note_id):
             voted = True
         except IntegrityError:
             db.session.rollback()
-            voted = True  # concurrent insert won
-
+            voted = True  
     db.session.commit()
 
     vote_count = db.session.scalar(
